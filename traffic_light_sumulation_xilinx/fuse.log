@@ -1,0 +1,18 @@
+Running: C:\Xilinx\14.5\ISE_DS\ISE\bin\nt64\unwrapped\fuse.exe -intstyle ise -incremental -o C:/Users/mrbean/Documents/xilinx/traffic_light_sumulation/fsm_tb_isim_beh.exe -prj C:/Users/mrbean/Documents/xilinx/traffic_light_sumulation/fsm_tb_beh.prj work.fsm_tb 
+ISim P.58f (signature 0x7708f090)
+Number of CPUs detected in this system: 1
+Turning on mult-threading, number of parallel sub-compilation jobs: 0 
+Determining compilation order of HDL files
+Parsing VHDL file "C:/Users/mrbean/Documents/xilinx/traffic_light_sumulation/fsm.vhd" into library work
+Parsing VHDL file "C:/Users/mrbean/Documents/xilinx/traffic_light_sumulation/fsm_tb.vhd" into library work
+Starting static elaboration
+Completed static elaboration
+Compiling package standard
+Compiling package std_logic_1164
+Compiling architecture behavioral of entity fsm [fsm_default]
+Compiling architecture behavior of entity fsm_tb
+Time Resolution for simulation is 1ps.
+Compiled 5 VHDL Units
+Built simulation executable C:/Users/mrbean/Documents/xilinx/traffic_light_sumulation/fsm_tb_isim_beh.exe
+Fuse Memory Usage: 28908 KB
+Fuse CPU Usage: 671 ms

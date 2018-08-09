@@ -1,0 +1,1 @@
+-intstyle "ise" -incremental -o "C:/Users/mrbean/Documents/xilinx/traffic_light_sumulation/fsm_tb_isim_beh.exe" -prj "C:/Users/mrbean/Documents/xilinx/traffic_light_sumulation/fsm_tb_beh.prj" "work.fsm_tb" 

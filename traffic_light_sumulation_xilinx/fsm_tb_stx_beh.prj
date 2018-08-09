@@ -1,0 +1,2 @@
+vhdl isim_temp "fsm.vhd"
+vhdl isim_temp "fsm_tb.vhd"

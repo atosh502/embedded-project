@@ -1,0 +1,469 @@
+C51 COMPILER V9.50a   MAIN                                                                 08/09/2018 10:18:59 PAGE 1   
+
+
+C51 COMPILER V9.50a, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          
+   3          //states              // B1, B2,  N1,  N2,  M1,  M2,  T1,  T2
+   4          unsigned char ST0[8] = {'G', 'G', 'R', 'G', 'R', 'G', 'R', 'G'};
+   5          unsigned char ST1[8] = {'Y', 'G', 'R', 'G', 'R', 'G', 'R', 'G'};
+   6          unsigned char ST2[9] = {'R', 'G', 'R', 'G', 'Y', 'G', 'R', 'G', '0'};
+   7          unsigned char ST3[8] = {'R', 'G', 'R', 'G', 'G', 'G', 'R', 'G'};
+   8          unsigned char ST4[9] = {'R', 'G', 'R', 'G', 'Y', 'G', 'R', 'G', '1'};
+   9          unsigned char ST5[9] = {'R', 'G', 'R', 'G', 'R', 'G', 'Y', 'G', '0'};
+  10          unsigned char ST6[8] = {'R', 'G', 'R', 'G', 'R', 'G', 'G', 'G'};
+  11          unsigned char ST7[9] = {'R', 'G', 'R', 'G', 'R', 'G', 'Y', 'G', '1'};
+  12          unsigned char ST8[8] = {'R', 'Y', 'R', 'Y', 'R', 'Y', 'R', 'Y'};
+  13          unsigned char ST9[8] = {'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'};
+  14          unsigned char ST10[8] = {'Y', 'Y', 'R', 'Y', 'R', 'Y', 'R', 'Y'};
+  15          unsigned char ST11[8] = {'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'};
+  16          unsigned char *present_state = ST0;
+  17          unsigned char *next_state = ST0;
+  18          
+  19          
+  20          // sensor inputs / interrupts
+  21          sbit urgent_B = P2^0; // emergency vehicle approaching from Bagmati side
+  22          sbit urgent_N = P2^1; // emergency vehicle approaching from Norvic side
+  23          sbit urgent_M = P2^2; // emergency vehicle approaching from Maitighar side
+  24          sbit urgent_T = P2^3; // emergency vehicle approaching from Tripureshwors side
+  25          
+  26          sbit vehicle_B = P2^4; // at least one vehicle approaching from Bagmati side
+  27          sbit vehicle_N = P2^5; // at least one vehicle approaching from Norvic side 
+  28          sbit vehicle_M = P2^6; // at least one vehicle approaching from Maitighar side
+  29          sbit vehicle_T = P2^7; // at least one vehicle approaching from Tripureshwor side
+  30          
+  31          // traffic lights
+  32          
+  33          // port 0
+  34          sbit T1_R = P0^0; // T1 traffic light controller of color RED at Tripureshwor side
+  35          sbit T1_Y = P0^1; // T1 traffic light controller of color YELLOW at Tripureshwor side
+  36          sbit T1_G = P0^2; // T1 traffic light controller of color GREEN at Tripureshwor side
+  37          
+  38          sbit T2_R = P0^3; // T2 traffic light controller of color RED at Tripureshwor side
+  39          sbit T2_Y = P0^4; // T2 traffic light controller of color YELLOW at Tripureshwor side
+  40          sbit T2_G = P0^5; // T2 traffic light controller of color GREEN at Tripureshwor side
+  41          
+  42          sbit M1_R = P0^6; // M1 traffic light controller of color RED at Maitighar side
+  43          sbit M2_R = P0^7; // M2 traffic light controller of color RED at Maitighar side
+  44          
+  45          // port 1
+  46          sbit B1_R = P1^0; // B1 traffic light controller of color RED at Bagmati side
+  47          sbit B1_Y = P1^1; // B1 traffic light controller of color YELLOW at Bagmati side
+  48          sbit B1_G = P1^2; // B1 traffic light controller of color GREEN at Bagmati side
+  49          
+  50          sbit B2_R = P1^3; // B2 traffic light controller of color RED at Bagmati side
+  51          sbit B2_Y = P1^4; // B2 traffic light controller of color YELLOW at Bagmati side
+  52          sbit B2_G = P1^5; // B2 traffic light controller of color GREEN at Bagmati side
+  53          
+  54          sbit M1_Y = P1^6; // M1 traffic light controller of color YELLOW at Maitighar side
+  55          sbit M2_Y = P1^7; // M2 traffic light controller of color YELLOW at Maitighar side
+C51 COMPILER V9.50a   MAIN                                                                 08/09/2018 10:18:59 PAGE 2   
+
+  56          
+  57          // port 3
+  58          sbit N1_R = P3^0; // N1 traffic light controller of color RED at Norvice side
+  59          sbit N1_Y = P3^1; // N1 traffic light controller of color YELLOW at Norvice side
+  60          sbit N1_G = P3^2; // N1 traffic light controller of color GREEN at Norvice side
+  61          
+  62          sbit N2_R = P3^3; // N2 traffic light controller of color RED at Norvice side
+  63          sbit N2_Y = P3^4; // N2 traffic light controller of color YELLOW at Norvice side
+  64          sbit N2_G = P3^5; // N2 traffic light controller of color GREEN at Norvice side
+  65          
+  66          sbit M1_G = P3^6; // M1 traffic light controller of color GREEN at Maitighar side
+  67          sbit M2_G = P3^7; // M2 traffic light controller of color GREEN at Maitighar side
+  68          
+  69          void delay3s(void);
+  70          void delay51s(void);
+  71          void delay3sAlways(void);
+  72          int equal(unsigned char *lhs, unsigned char *rhs, int n);
+  73          void display(unsigned char *state);
+  74          
+  75          void main(void){
+  76   1          
+  77   1        // initialize everything to zero
+  78   1        P0 = 0x00;  // output pin
+  79   1        P1 = 0x00;  // output pin
+  80   1        P2 = 0x00;  // input pin
+  81   1        P3 = 0x00;  // output pin
+  82   1        
+  83   1        while(1){
+  84   2      
+  85   2          if (equal((unsigned char *)present_state, (unsigned char *)ST0, 8) == 1){
+  86   3            
+  87   3            // B1:GREEN, B2:GREEN, T1:RED, T2:GREEN, N1:RED, N2:GREEN, M1:RED, M2:GREEN
+  88   3            display((unsigned char *)present_state);
+  89   3            
+  90   3            delay51s();
+  91   3            
+  92   3            if (urgent_B == 1){
+  93   4              urgent_B = 0;
+  94   4              next_state = ST0;
+  95   4            } else if (urgent_B == 0 && (urgent_T == 1 || urgent_M == 1) ){
+  96   4              next_state = ST11;
+  97   4            } else if (vehicle_T == 1 || vehicle_N == 1 || vehicle_M == 1 ){
+  98   4              next_state = ST1;
+  99   4            } else {
+ 100   4              next_state = ST0;
+ 101   4            }
+ 102   3            
+ 103   3          } else if (equal((unsigned char *)present_state, (unsigned char *)ST1, 8) == 1){
+ 104   3            
+ 105   3            // B1:YELLOW, B2:GREEN, T1:RED, T2:GREEN, N1:RED, N2:GREEN, M1:RED, M2:GREEN
+ 106   3            display((unsigned char *)present_state);
+ 107   3            
+ 108   3            delay3s();
+ 109   3            
+ 110   3            if (urgent_B == 1 || urgent_T == 1 || urgent_M == 1) {
+ 111   4              next_state = ST11;
+ 112   4            } else {
+ 113   4              next_state = ST2;
+ 114   4            }
+ 115   3            
+ 116   3          } else if (equal((unsigned char *)present_state, (unsigned char *)ST2, 9) == 1) {
+ 117   3            
+C51 COMPILER V9.50a   MAIN                                                                 08/09/2018 10:18:59 PAGE 3   
+
+ 118   3            // B1:RED, B2:GREEN, T1:RED, T2:GREEN, N1:RED, N2:GREEN, M1:YELLOW, M2:GREEN
+ 119   3            display((unsigned char *)present_state);
+ 120   3            
+ 121   3            delay3s();
+ 122   3            
+ 123   3            if (urgent_B == 1 || urgent_T == 1 || urgent_M == 1) {
+ 124   4              next_state = ST11;
+ 125   4            } else {
+ 126   4              next_state = ST3;
+ 127   4            }
+ 128   3            
+ 129   3          } else if (equal((unsigned char *)present_state, (unsigned char *)ST3, 8) == 1){
+ 130   3            
+ 131   3            // B1:RED, B2:GREEN, T1:RED, T2:GREEN, N1:RED, N2:GREEN, M1:GREEN, M2:GREEN
+ 132   3            display((unsigned char *)present_state);
+ 133   3            
+ 134   3            delay51s();
+ 135   3            
+ 136   3            if (urgent_M == 1){
+ 137   4              urgent_M = 0;
+ 138   4              next_state = ST3;
+ 139   4            } else if (urgent_M == 0 && (urgent_T == 1 || urgent_B == 1) ){
+ 140   4              next_state = ST11;
+ 141   4            } else if (vehicle_T == 1 || vehicle_N == 1 || vehicle_M == 1){
+ 142   4              next_state = ST4;
+ 143   4            } else {
+ 144   4              next_state = ST3;
+ 145   4            }
+ 146   3            
+ 147   3          } else if (equal((unsigned char *)present_state, (unsigned char *)ST4, 9) == 1){
+ 148   3            
+ 149   3            // B1:RED, B2:GREEN, T1:RED, T2:GREEN, N1:RED, N2:GREEN, M1:YELLOW, M2:GREEN
+ 150   3            display((unsigned char *)present_state);
+ 151   3            
+ 152   3            delay3s();
+ 153   3            
+ 154   3            if (urgent_B == 1 || urgent_T == 1 || urgent_M == 1) {
+ 155   4              next_state = ST11;
+ 156   4            } else {
+ 157   4              next_state = ST5;
+ 158   4            }
+ 159   3            
+ 160   3          } else if (equal((unsigned char *)present_state, (unsigned char *)ST5, 9) == 1){
+ 161   3            
+ 162   3            // B1:RED, B2:GREEN, T1:YELLOW, T2:GREEN, N1:RED, N2:GREEN, M1:RED, M2:GREEN
+ 163   3            display((unsigned char *)present_state);
+ 164   3            
+ 165   3            delay3s();
+ 166   3            
+ 167   3            if (urgent_B == 1 || urgent_T == 1 || urgent_M == 1) {
+ 168   4              next_state = ST11;
+ 169   4            } else {
+ 170   4              next_state = ST6;
+ 171   4            }
+ 172   3            
+ 173   3          } else if (equal((unsigned char *)present_state, (unsigned char *)ST6, 8) == 1){
+ 174   3            
+ 175   3            // B1:RED, B2:GREEN, T1:GREEN, T2:GREEN, N1:RED, N2:GREEN, M1:RED, M2:GREEN
+ 176   3            display((unsigned char *)present_state);
+ 177   3            
+ 178   3            delay51s();
+ 179   3            
+C51 COMPILER V9.50a   MAIN                                                                 08/09/2018 10:18:59 PAGE 4   
+
+ 180   3            if (urgent_T == 1){
+ 181   4              urgent_T = 0;
+ 182   4              next_state = ST6;
+ 183   4            } else if (urgent_T == 0 && (urgent_M == 1 || urgent_B == 1) ){
+ 184   4              next_state = ST11;
+ 185   4            } else if (vehicle_T == 1 || vehicle_N == 1 || vehicle_M == 1 ){
+ 186   4              next_state = ST7;
+ 187   4            } else {
+ 188   4              next_state = ST6;
+ 189   4            }
+ 190   3            
+ 191   3          } else if (equal((unsigned char *)present_state, (unsigned char *)ST7, 9) == 1){
+ 192   3            
+ 193   3            // B1:RED, B2:GREEN, T1:YELLOW, T2:GREEN, N1:RED, N2:GREEN, M1:RED, M2:GREEN
+ 194   3            display((unsigned char *)present_state);
+ 195   3            
+ 196   3            delay3s();
+ 197   3            
+ 198   3            if (urgent_B == 1 || urgent_T == 1 || urgent_M == 1) {
+ 199   4              next_state = ST11;
+ 200   4            } else {
+ 201   4              next_state = ST8;
+ 202   4            }
+ 203   3            
+ 204   3          } else if (equal((unsigned char *)present_state, (unsigned char *)ST8, 8) == 1){
+ 205   3            
+ 206   3            // B1:RED, B2:YELLOW, T1:RED, T2:YELLOW, N1:RED, N2:YELLOW, M1:RED, M2:YELLOW
+ 207   3            display((unsigned char *)present_state);
+ 208   3            
+ 209   3            delay3s();
+ 210   3            
+ 211   3            if (urgent_B == 1 || urgent_T == 1 || urgent_M == 1) {
+ 212   4              next_state = ST11;
+ 213   4            } else {
+ 214   4              next_state = ST9;
+ 215   4            }
+ 216   3            
+ 217   3          } else if (equal((unsigned char *)present_state, (unsigned char *)ST9, 8) == 1){
+ 218   3            
+ 219   3            // B1:RED, B2:RED, T1:RED, T2:RED, N1:RED, N2:RED, M1:RED, M2:RED
+ 220   3            display((unsigned char *)present_state);
+ 221   3            
+ 222   3            delay51s();
+ 223   3            
+ 224   3            if (urgent_T == 0 || urgent_M == 1 || urgent_B == 1){
+ 225   4              next_state = ST11;
+ 226   4            } else if (vehicle_T == 1 || vehicle_N == 1 || vehicle_M == 1 || vehicle_B == 1 ){
+ 227   4              next_state = ST10;
+ 228   4            } else {
+ 229   4              next_state = ST9;
+ 230   4            }
+ 231   3          } else if (equal((unsigned char *)present_state, (unsigned char *)ST10, 8) == 1){
+ 232   3            
+ 233   3            // B1:YELLOW, B2:YELLOW, T1:RED, T2:YELLOW, N1:RED, N2:YELLOW, M1:RED, M2:YELLOW
+ 234   3            display((unsigned char *)present_state);
+ 235   3            
+ 236   3            delay3s();
+ 237   3            
+ 238   3            if (urgent_B == 1 || urgent_T == 1 || urgent_M == 1) {
+ 239   4              next_state = ST11;
+ 240   4            } else {
+ 241   4              next_state = ST0;
+C51 COMPILER V9.50a   MAIN                                                                 08/09/2018 10:18:59 PAGE 5   
+
+ 242   4            }
+ 243   3            
+ 244   3          } else if (equal((unsigned char *)present_state, (unsigned char *)ST11, 8) == 1){
+ 245   3            
+ 246   3            // B1:YELLOW, B2:YELLOW, T1:YELLOW, T2:YELLOW, N1:YELLOW, N2:YELLOW, M1:YELLOW, M2:YELLOW
+ 247   3            display((unsigned char *)present_state);
+ 248   3            
+ 249   3            delay3sAlways();
+ 250   3            
+ 251   3            if (urgent_B == 1){
+ 252   4              urgent_B = 0;
+ 253   4              next_state = ST0;
+ 254   4            } else if (urgent_M == 1){
+ 255   4              urgent_M = 0;
+ 256   4              next_state = ST3;
+ 257   4            } else if (urgent_T == 1){
+ 258   4              urgent_T = 0;
+ 259   4              next_state = ST6;
+ 260   4            } else {
+ 261   4              next_state = ST0;
+ 262   4            }
+ 263   3            
+ 264   3          } else {
+ 265   3            next_state = ST0;
+ 266   3          }
+ 267   2          
+ 268   2          present_state = next_state;
+ 269   2          
+ 270   2        } // end while(1)
+ 271   1      } // end main()
+ 272          
+ 273          void display(unsigned char *state){
+ 274   1        
+ 275   1        P0 = 0x00;
+ 276   1        P1 = 0x00;
+ 277   1        P3 = 0x00;
+ 278   1        
+ 279   1        if (state[0] == 'R'){
+ 280   2          B1_R = 1;
+ 281   2        } else if (state[0] == 'Y'){
+ 282   2          B1_Y = 1;
+ 283   2        } else if (state[0] == 'G'){
+ 284   2          B1_G = 1;
+ 285   2        } else {  // error state all are on!
+ 286   2          B1_R = 1; B1_Y = 1; B1_G = 1;
+ 287   2        }
+ 288   1        
+ 289   1        if (state[1] == 'R'){
+ 290   2          B2_R = 1;
+ 291   2        } else if (state[1] == 'Y'){
+ 292   2          B2_Y = 1;
+ 293   2        } else if (state[1] == 'G'){
+ 294   2          B2_G = 1;
+ 295   2        } else {  // error state all are on!
+ 296   2          B2_R = 1; B2_Y = 1; B2_G = 1;
+ 297   2        }
+ 298   1        
+ 299   1        if (state[2] == 'R'){
+ 300   2          N1_R = 1;
+ 301   2        } else if (state[2] == 'Y'){
+ 302   2          N1_Y = 1;
+ 303   2        } else if (state[2] == 'G'){
+C51 COMPILER V9.50a   MAIN                                                                 08/09/2018 10:18:59 PAGE 6   
+
+ 304   2          N1_G = 1;
+ 305   2        } else {  // error state all are on!
+ 306   2          N1_R = 1; N1_Y = 1; N1_G = 1;
+ 307   2        }
+ 308   1        
+ 309   1        if (state[3] == 'R'){
+ 310   2          N2_R = 1;
+ 311   2        } else if (state[3] == 'Y'){
+ 312   2          N2_Y = 1;
+ 313   2        } else if (state[3] == 'G'){
+ 314   2          N2_G = 1;
+ 315   2        } else {  // error state all are on!
+ 316   2          N2_R = 1; N2_Y = 1; N2_G = 1;
+ 317   2        }
+ 318   1        
+ 319   1        if (state[4] == 'R'){
+ 320   2          M1_R = 1;
+ 321   2        } else if (state[4] == 'Y'){
+ 322   2          M1_Y = 1;
+ 323   2        } else if (state[4] == 'G'){
+ 324   2          M1_G = 1;
+ 325   2        } else {  // error state all are on!
+ 326   2          M1_R = 1; M1_Y = 1; M1_G = 1;
+ 327   2        }
+ 328   1        
+ 329   1        if (state[5] == 'R'){
+ 330   2          M2_R = 1;
+ 331   2        } else if (state[5] == 'Y'){
+ 332   2          M2_Y = 1;
+ 333   2        } else if (state[5] == 'G'){
+ 334   2          M2_G = 1;
+ 335   2        } else {  // error state all are on!
+ 336   2          M2_R = 1; M2_Y = 1; M2_G = 1;
+ 337   2        }
+ 338   1        
+ 339   1        if (state[6] == 'R'){
+ 340   2          T1_R = 1;
+ 341   2        } else if (state[6] == 'Y'){
+ 342   2          T1_Y = 1;
+ 343   2        } else if (state[6] == 'G'){
+ 344   2          T1_G = 1;
+ 345   2        } else {  // error state all are on!
+ 346   2          T1_R = 1; T1_Y = 1; T1_G = 1;
+ 347   2        }
+ 348   1        
+ 349   1        if (state[7] == 'R'){
+ 350   2          T2_R = 1;
+ 351   2        } else if (state[7] == 'Y'){
+ 352   2          T2_Y = 1;
+ 353   2        } else if (state[7] == 'G'){
+ 354   2          T2_G = 1;
+ 355   2        } else {  // error state all are on!
+ 356   2          T2_R = 1; T2_Y = 1; T2_G = 1;
+ 357   2        }
+ 358   1        
+ 359   1      }
+ 360          
+ 361          int equal(unsigned char *lhs, unsigned char *rhs, int n){
+ 362   1        // if equal returns 1 else returns 0
+ 363   1        int i; 
+ 364   1        for (i = 0; i < n; i++){
+ 365   2          if (lhs[i] != rhs[i]){
+C51 COMPILER V9.50a   MAIN                                                                 08/09/2018 10:18:59 PAGE 7   
+
+ 366   3            return 0;
+ 367   3          }
+ 368   2        }
+ 369   1        return 1;
+ 370   1      }
+ 371          
+ 372          void delay51s(){
+ 373   1        
+ 374   1        unsigned int i, j;
+ 375   1        //i = 18;
+ 376   1        i = 5;
+ 377   1        while (i--){
+ 378   2          j = 43;
+ 379   2          while (j--){
+ 380   3            TMOD = 0x01;  // timer 0 in mode 1
+ 381   3            TL0 = 0xD4; 
+ 382   3            TH0 = 0x04;
+ 383   3            TR0 = 1;      // turn on timer 0
+ 384   3            while (TF0 == 0){ // wait for TF0 to roll over
+ 385   4              if (urgent_B == 1 || urgent_M == 1 || urgent_T == 1){
+ 386   5                TR0 = 0;  // turn off timer 0
+ 387   5                TF0 = 0;
+ 388   5                return;
+ 389   5              }
+ 390   4            }
+ 391   3            TR0 = 0;      // turn off timer 0
+ 392   3            TF0 = 0;  
+ 393   3          }
+ 394   2        }
+ 395   1      }
+ 396          
+ 397          void delay3s(){
+ 398   1        
+ 399   1        unsigned int i;
+ 400   1        i = 43;
+ 401   1        while (i--){
+ 402   2          TMOD = 0x01;  // timer 0 in mode 1
+ 403   2          TL0 = 0xD4; 
+ 404   2          TH0 = 0x04;
+ 405   2          TR0 = 1;      // turn on timer 0
+ 406   2          while (TF0 == 0){ // wait for TF0 to roll over
+ 407   3            if (urgent_B == 1 || urgent_M == 1 || urgent_T == 1){
+ 408   4                TR0 = 0;  // turn off timer 0
+ 409   4                TF0 = 0;
+ 410   4                return;
+ 411   4            }
+ 412   3          }
+ 413   2          TR0 = 0;      // turn off timer 0
+ 414   2          TF0 = 0;  
+ 415   2        }
+ 416   1      }
+ 417          
+ 418          void delay3sAlways(){
+ 419   1        
+ 420   1        unsigned int i;
+ 421   1        i = 43;
+ 422   1        while (i--){
+ 423   2          TMOD = 0x01;  // timer 0 in mode 1
+ 424   2          TL0 = 0xD4; 
+ 425   2          TH0 = 0x04;
+ 426   2          TR0 = 1;      // turn on timer 0
+ 427   2          while (TF0 == 0); // wait for TF0 to roll over
+C51 COMPILER V9.50a   MAIN                                                                 08/09/2018 10:18:59 PAGE 8   
+
+ 428   2          TR0 = 0;      // turn off timer 0
+ 429   2          TF0 = 0;  
+ 430   2          
+ 431   2        }
+ 432   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1211    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =    106       8
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
